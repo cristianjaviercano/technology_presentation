@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import {
-  BookOpen, Calculator, PlayCircle, CheckSquare, Award,
+  Menu, X, BookOpen, Calculator, PlayCircle, CheckSquare, Award,
   FileEdit, Network, Truck, Database, User, CheckCircle2, GitBranch
 } from 'lucide-react';
 import HomeView from './views/HomeView';
@@ -40,6 +40,7 @@ const PROGRESS_KEY = 'oredes_progress_v2';
 
 export default function App() {
   const [currentView, setCurrentView] = useState('home');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [visited, setVisited] = useState(() => {
     try { return JSON.parse(localStorage.getItem(PROGRESS_KEY)) || {}; } catch { return {}; }
   });
@@ -48,6 +49,7 @@ export default function App() {
 
   const navigate = useCallback((id) => {
     setCurrentView(id);
+    setIsSidebarOpen(false);
     setVisited(prev => {
       const next = { ...prev, [id]: true };
       localStorage.setItem(PROGRESS_KEY, JSON.stringify(next));
@@ -84,11 +86,19 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen bg-slate-950 font-sans text-slate-100 overflow-hidden">
+    <div className="flex h-screen bg-slate-950 font-sans text-slate-100 overflow-hidden relative">
+      {/* MOBILE OVERLAY */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-30 md:hidden" 
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* SIDEBAR */}
-      <aside className="w-72 flex-shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col shadow-2xl z-20">
+      <aside className={`fixed md:static inset-y-0 left-0 w-72 flex-shrink-0 bg-slate-900 border-r border-slate-800 flex flex-col shadow-2xl z-40 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         {/* Logo */}
-        <div className="p-5 bg-gradient-to-br from-slate-900 to-slate-800 border-b border-slate-700">
+        <div className="p-5 bg-gradient-to-br from-slate-900 to-slate-800 border-b border-slate-700 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-emerald-500/20 flex items-center justify-center">
               <Network size={20} className="text-emerald-400" />
@@ -98,19 +108,22 @@ export default function App() {
               <p className="text-xs text-slate-400 font-mono">UPB · Ing. Industrial VII</p>
             </div>
           </div>
-          <div className="mt-4">
-            <div className="flex justify-between text-xs text-slate-400 mb-1">
-              <span>Progreso del curso</span>
-              <span className="font-mono text-emerald-400">{progressPct}%</span>
-            </div>
-            <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
-              <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${progressPct}%` }} />
-            </div>
+          <button className="md:hidden text-slate-400 hover:text-white" onClick={() => setIsSidebarOpen(false)}>
+            <X size={20} />
+          </button>
+        </div>
+        <div className="px-5 pt-4">
+          <div className="flex justify-between text-xs text-slate-400 mb-1">
+            <span>Progreso del curso</span>
+            <span className="font-mono text-emerald-400">{progressPct}%</span>
+          </div>
+          <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+            <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${progressPct}%` }} />
           </div>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-3 scrollbar-thin">
+        <nav className="flex-1 overflow-y-auto py-3 scrollbar-thin mt-2">
           {NAV.map((item, idx) => {
             if (item.type === 'header') return (
               <div key={idx} className="mt-4 mb-1 px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">{item.label}</div>
@@ -152,9 +165,24 @@ export default function App() {
       </aside>
 
       {/* MAIN */}
-      <main className="flex-1 overflow-y-auto scrollbar-thin">
-        <div className="max-w-4xl mx-auto px-8 py-10">
-          {VIEW_MAP[currentView] || <HomeView />}
+      <main className="flex-1 flex flex-col h-screen overflow-hidden">
+        {/* MOBILE HEADER */}
+        <div className="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-slate-800 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+              <Network size={16} className="text-emerald-400" />
+            </div>
+            <h1 className="text-sm font-bold text-white leading-tight">Optimización de Redes</h1>
+          </div>
+          <button onClick={() => setIsSidebarOpen(true)} className="text-slate-400 hover:text-white bg-slate-800 p-2 rounded-lg">
+            <Menu size={20} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto scrollbar-thin">
+          <div className="max-w-4xl mx-auto px-4 md:px-8 py-6 md:py-10">
+            {VIEW_MAP[currentView] || <HomeView />}
+          </div>
         </div>
       </main>
     </div>
